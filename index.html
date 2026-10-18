@@ -133,6 +133,8 @@ main{flex:1;overflow-y:auto;padding:14px;-webkit-overflow-scrolling:touch}
 .mrow .del{flex:none;padding:10px 12px;font-size:15px}
 .foot{font-size:13px;color:var(--gray);text-align:center;margin:18px 0 4px;line-height:1.5}
 .incl.one{white-space:nowrap;font-size:clamp(10px,4vw,18px);padding:10px 6px;margin-bottom:12px}
+.hint{padding:7px 12px;font-size:clamp(13px,3.7vw,16px);line-height:1.35;gap:6px;align-items:center;border-bottom-width:2px}
+.hint .ic{font-size:clamp(16px,4.6vw,20px)}
 /* ===== 좁은 화면(폰) 보정 ===== */
 body{word-break:keep-all;overflow-wrap:break-word}
 .top{padding:8px 12px 8px}
@@ -269,7 +271,7 @@ const A={
     S.processing=true;render();
     setTimeout(()=>{
       S.orderNo=100+Math.floor(Math.random()*900);
-      S.done={cart:JSON.parse(JSON.stringify(S.cart)),total:total(),dine:S.dine,pay:S.pay};
+      S.done={cart:JSON.parse(JSON.stringify(S.cart)),total:total(),dine:S.dine,pay:S.pay,orderNo:S.orderNo};
       S.screen='done';S.processing=false;render();scrollTop();
     },1800);
   },
@@ -292,10 +294,10 @@ function hintText(){
   const s=S.screen;
   if(s==='start')return'먼저 아래에서 <u>매장에서 먹기</u> 또는 <u>포장하기</u> 중 하나를 눌러보세요.';
   if(s==='menu')return'';
-  if(s==='cart')return'주문 내용과 금액이 맞는지 확인하고 <u>결제하기</u>를 누르세요. 수량은 + − 버튼으로 바꿀 수 있어요.';
-  if(s==='pay')return'결제 방법을 하나 골라주세요.';
+  if(s==='cart')return'주문 내용과 금액이 맞는지 확인하고 <u>결제하기</u>를 누르세요.';
+  if(s==='pay')return'';
   if(s==='paying')return S.processing?'결제 중이에요. 잠시만 기다려주세요.':'안내 문구를 읽고 따라 해보세요. 연습이라 실제 결제는 되지 않아요.';
-  return'수고하셨어요! 번호가 불리면 주문한 음식을 받으시면 됩니다.';
+  return'';
 }
 function stepIdx(){return{start:0,menu:1,cart:2,pay:3,paying:3,done:4}[S.screen]}
 
