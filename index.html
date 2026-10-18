@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#c8281e">
+<title>키오스크 주문 연습</title>
+<style>
+:root{
+  --red:#c8281e; --red-d:#9e1d15; --yellow:#ffc72c; --ink:#1f1f1f; --gray:#6b6b6b;
+  --bg:#fff8e6; --card:#ffffff; --line:#e3d9bf; --green:#1f8a3b;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#2b2b2b}
+body{font-family:'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;color:var(--ink);touch-action:manipulation}
+button{font-family:inherit;cursor:pointer;border:0}
+#app{max-width:520px;margin:0 auto;height:100vh;height:100dvh;background:var(--bg);display:flex;flex-direction:column;position:relative;overflow:hidden}
+
+/* 헤더 */
+.top{background:var(--red);color:#fff;padding:10px 14px 8px;flex:none}
+.top-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.top h1{font-size:20px;margin:0;font-weight:800}
+.chip{background:rgba(255,255,255,.2);color:#fff;font-size:15px;font-weight:700;padding:8px 12px;border-radius:20px}
+.steps{display:flex;gap:4px;margin-top:8px}
+.steps div{flex:1;text-align:center;font-size:13px;font-weight:700;padding:5px 0;border-radius:8px;background:rgba(255,255,255,.18);color:#ffd9d5}
+.steps div.on{background:var(--yellow);color:#3a2a00}
+.steps div.done{background:rgba(255,255,255,.4);color:#fff}
+
+/* 도움말 */
+.hint{flex:none;background:#fff3b8;border-bottom:3px solid var(--yellow);padding:10px 14px;font-size:19px;line-height:1.45;font-weight:700;display:flex;gap:8px;align-items:flex-start}
+.hint .ic{font-size:24px}
+.mission{flex:none;background:#e8f3ff;border-bottom:2px solid #9cc6f0;padding:8px 14px;font-size:16px;line-height:1.4;color:#14436e;font-weight:600}
+
+main{flex:1;overflow-y:auto;padding:14px;-webkit-overflow-scrolling:touch}
+
+/* 버튼 */
+.btn{display:block;width:100%;font-size:24px;font-weight:800;padding:20px 12px;border-radius:16px;background:var(--red);color:#fff;box-shadow:0 4px 0 var(--red-d)}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--red-d)}
+.btn.sub{background:#fff;color:var(--ink);border:3px solid var(--line);box-shadow:0 4px 0 var(--line)}
+.btn.green{background:var(--green);box-shadow:0 4px 0 #14622a}
+.btn.small{font-size:18px;padding:12px}
+.btn[disabled]{opacity:.4}
+.row{display:flex;gap:10px}
+.row > *{flex:1}
+.pulse{animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 4px 0 var(--red-d),0 0 0 0 rgba(255,199,44,.9)}50%{box-shadow:0 4px 0 var(--red-d),0 0 0 12px rgba(255,199,44,0)}}
+
+/* 시작화면 */
+.start-title{text-align:center;margin:6px 0 16px}
+.start-title .big{font-size:58px}
+.start-title h2{font-size:28px;margin:4px 0}
+.start-title p{margin:0;color:var(--gray);font-size:17px}
+.choice{display:flex;flex-direction:column;gap:14px}
+.choice .btn{display:flex;align-items:center;justify-content:center;gap:12px;padding:30px 12px;font-size:28px}
+.choice .btn span.e{font-size:42px}
+.mission-box{margin-top:22px;background:#fff;border:2px dashed #9cc6f0;border-radius:16px;padding:14px}
+.mission-box h3{margin:0 0 10px;font-size:19px;color:#14436e}
+.mission-box button{display:block;width:100%;text-align:left;background:#f3f9ff;border:2px solid #cfe5f9;border-radius:12px;padding:12px;font-size:17px;line-height:1.4;margin-bottom:8px;font-weight:600;color:#14436e}
+.mission-box button.sel{background:#14436e;color:#fff;border-color:#14436e}
+
+/* 메뉴 */
+.cats{display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;margin:-4px -4px 6px;padding:4px}
+.cat{flex:none;min-width:84px;padding:10px 8px;border-radius:14px;background:#fff;border:3px solid var(--line);font-size:17px;font-weight:800;color:var(--ink);text-align:center}
+.cat .e{display:block;font-size:30px}
+.cat.on{background:var(--red);color:#fff;border-color:var(--red-d)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.item{background:var(--card);border:3px solid var(--line);border-radius:18px;padding:14px 8px;text-align:center;font-size:19px;font-weight:800;color:var(--ink);box-shadow:0 3px 0 var(--line)}
+.item:active{transform:translateY(2px)}
+.item .e{font-size:52px;display:block;margin-bottom:4px}
+.item .p{display:block;color:var(--red);font-size:20px;margin-top:6px}
+
+/* 하단바 */
+.bar{flex:none;background:#fff;border-top:3px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom));display:flex;gap:10px;align-items:center}
+.bar .sum{flex:1;font-size:17px;font-weight:700;line-height:1.3}
+.bar .sum b{font-size:22px;color:var(--red)}
+.bar .btn{width:auto;flex:none;padding:16px 22px;font-size:22px}
+
+/* 장바구니 */
+.cart-item{background:#fff;border:3px solid var(--line);border-radius:16px;padding:12px;margin-bottom:12px}
+.cart-item .t{display:flex;align-items:center;gap:10px;font-size:21px;font-weight:800}
+.cart-item .t .e{font-size:36px}
+.cart-item .d{color:var(--gray);font-size:16px;margin:2px 0 0 46px;font-weight:600}
+.cart-item .b{display:flex;align-items:center;justify-content:space-between;margin-top:10px}
+.qty{display:flex;align-items:center;gap:10px}
+.qty button{width:52px;height:52px;border-radius:50%;background:var(--yellow);font-size:30px;font-weight:900;color:#3a2a00}
+.qty span{min-width:34px;text-align:center;font-size:26px;font-weight:800}
+.del{background:#fff;border:2px solid #d8b4b0 !important;color:#a02820;font-size:16px;font-weight:700;border-radius:10px;padding:10px 12px}
+.price{font-size:22px;font-weight:800}
+.total{display:flex;justify-content:space-between;align-items:center;font-size:24px;font-weight:800;padding:14px 4px}
+.total b{color:var(--red);font-size:30px}
+.empty{text-align:center;padding:50px 10px;color:var(--gray);font-size:20px}
+.empty .e{font-size:60px}
+
+/* 결제 */
+.paybtn{display:flex;align-items:center;gap:14px;text-align:left;font-size:24px;padding:22px 16px}
+.paybtn .e{font-size:40px}
+.paybtn small{display:block;font-size:15px;font-weight:600;opacity:.85}
+.center{text-align:center}
+.slot{margin:20px auto;width:240px;height:120px;border-radius:16px;background:#333;position:relative;overflow:hidden}
+.slot::after{content:'';position:absolute;left:20px;right:20px;top:54px;height:12px;background:#000;border-radius:6px}
+.card{position:absolute;left:62px;top:-70px;width:116px;height:72px;border-radius:10px;background:linear-gradient(135deg,#3a7bd5,#00d2ff);animation:ins 2s infinite;box-shadow:0 2px 6px rgba(0,0,0,.4)}
+.card::before{content:'';position:absolute;left:10px;top:14px;width:24px;height:18px;background:#ffd86b;border-radius:3px}
+@keyframes ins{0%{top:-72px}60%,100%{top:54px}}
+.qr{font-size:90px;animation:bounce 1.2s infinite}
+@keyframes bounce{50%{transform:translateY(-10px)}}
+.spin{width:70px;height:70px;border:9px solid #eee;border-top-color:var(--red);border-radius:50%;margin:40px auto 20px;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.big-msg{font-size:26px;font-weight:800;line-height:1.4;margin:8px 0}
+.sm-msg{font-size:18px;color:var(--gray);line-height:1.5}
+
+/* 완료 */
+.order-no{background:#fff;border:4px solid var(--red);border-radius:22px;text-align:center;padding:18px;margin:10px 0 16px}
+.order-no small{font-size:18px;color:var(--gray);font-weight:700}
+.order-no .n{font-size:76px;font-weight:900;color:var(--red);line-height:1.1}
+.receipt{background:#fff;border:2px dashed #bbb;border-radius:12px;padding:12px 14px;font-size:17px;line-height:1.7;margin-bottom:14px}
+.receipt .r{display:flex;justify-content:space-between;gap:8px}
+.result{border-radius:16px;padding:14px;margin-bottom:14px;font-size:17px;line-height:1.6;font-weight:600}
+.result.ok{background:#e6f6ea;border:3px solid var(--green);color:#115a26}
+.result.ng{background:#fdecea;border:3px solid #d9534f;color:#7a1c17}
+.result h3{margin:0 0 6px;font-size:21px}
+
+/* 모달 */
+.ov{position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;z-index:10}
+.sheet{background:#fff;width:100%;border-radius:24px 24px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));max-height:88%;overflow-y:auto}
+.sheet h3{margin:0 0 4px;font-size:26px;text-align:center}
+.sheet .sub{text-align:center;color:var(--gray);font-size:17px;margin-bottom:14px}
+.sheet .btn{margin-bottom:10px}
+.opt{display:flex;justify-content:space-between;align-items:center}
+.toast{position:absolute;left:50%;bottom:110px;transform:translateX(-50%);background:#222;color:#fff;padding:14px 22px;border-radius:30px;font-size:19px;font-weight:700;z-index:20;white-space:nowrap;max-width:92%;overflow:hidden;text-overflow:ellipsis;box-shadow:0 4px 14px rgba(0,0,0,.4)}
+.incl{background:#fff3b8;border:2px solid var(--yellow);border-radius:12px;padding:10px 12px;font-size:17px;line-height:1.5;font-weight:700;margin-bottom:12px;text-align:center}
+.foot{font-size:13px;color:var(--gray);text-align:center;margin:18px 0 4px;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* ===== 데이터 (가격·메뉴는 연습용 예시입니다) ===== */
+const CATS=[
+  {id:'burger',name:'버거(단품)',e:'🍔'},
+  {id:'set',name:'세트메뉴',e:'🍱'},
+  {id:'chicken',name:'치킨·스낵',e:'🍗'},
+  {id:'side',name:'사이드',e:'🍟'},
+  {id:'drink',name:'음료',e:'🥤'},
+  {id:'dessert',name:'디저트',e:'🍦'},
+  {id:'coffee',name:'커피',e:'☕'}
+];
+const MENU=[
+  {cat:'burger',name:'빅맥',e:'🍔',price:5500},
+  {cat:'burger',name:'1955 버거',e:'🍔',price:6900},
+  {cat:'burger',name:'쿼터파운더 치즈',e:'🍔',price:6500},
+  {cat:'burger',name:'더블 쿼터파운더 치즈',e:'🍔',price:8400},
+  {cat:'burger',name:'불고기 버거',e:'🍔',price:3700},
+  {cat:'burger',name:'치즈버거',e:'🍔',price:3300},
+  {cat:'burger',name:'맥치킨',e:'🍔',price:4900},
+  {cat:'burger',name:'맥스파이시 상하이 버거',e:'🍔',price:5800},
+  {cat:'chicken',name:'맥너겟 4조각',e:'🍗',price:2900},
+  {cat:'chicken',name:'맥너겟 6조각',e:'🍗',price:4300},
+  {cat:'chicken',name:'맥스파이시 치킨 텐더 2조각',e:'🍗',price:4600},
+  {cat:'chicken',name:'상하이 치킨 스낵랩',e:'🌯',price:3200},
+  {cat:'side',name:'후렌치 후라이(M)',e:'🍟',price:2500},
+  {cat:'side',name:'후렌치 후라이(L)',e:'🍟',price:3200},
+  {cat:'side',name:'해쉬브라운',e:'🥔',price:1500},
+  {cat:'side',name:'치즈스틱 2조각',e:'🧀',price:2800},
+  {cat:'side',name:'코울슬로',e:'🥗',price:2000},
+  {cat:'drink',name:'코카콜라',e:'🥤',price:2000},
+  {cat:'drink',name:'코카콜라 제로',e:'🥤',price:2000},
+  {cat:'drink',name:'스프라이트',e:'🥤',price:2000},
+  {cat:'drink',name:'환타',e:'🥤',price:2000},
+  {cat:'drink',name:'오렌지 주스',e:'🧃',price:2500},
+  {cat:'dessert',name:'오레오 맥플러리',e:'🍨',price:3900},
+  {cat:'dessert',name:'바닐라 선데이',e:'🍦',price:2200},
+  {cat:'dessert',name:'애플파이',e:'🥧',price:2000},
+  {cat:'dessert',name:'아이스크림 콘',e:'🍦',price:1000},
+  {cat:'coffee',name:'아메리카노',e:'☕',price:2500},
+  {cat:'coffee',name:'카페라떼',e:'☕',price:3300},
+  {cat:'coffee',name:'카푸치노',e:'☕',price:3300},
+  {cat:'coffee',name:'바닐라 라떼',e:'☕',price:3800}
+];
+MENU.forEach((m,i)=>m.id=i);
+const SET_ADD=2300;
+const COFFEE_ADD=500;
+const COFFEES=['아메리카노','카페라떼'];
+const MISSIONS=[
+  {text:'빅맥 세트 1개를 포장으로 주문하기',dine:'포장',pay:null,items:[{key:'빅맥|세트',qty:1}]},
+  {text:'매장에서 먹기: 불고기 버거 단품 2개 + 아이스 아메리카노 1잔',dine:'매장',pay:null,items:[{key:'불고기 버거|단품',qty:2},{key:'아메리카노|아이스',qty:1}]},
+  {text:'매장에서 먹기: 1955 버거 세트 1개 + 오레오 맥플러리 1개, 카드로 결제하기',dine:'매장',pay:'카드',items:[{key:'1955 버거|세트',qty:1},{key:'오레오 맥플러리|',qty:1}]},
+  {text:'포장: 맥너겟 6조각 1개 + 후렌치 후라이(M) 1개, 간편결제로 결제하기',dine:'포장',pay:'간편결제',items:[{key:'맥너겟 6조각|',qty:1},{key:'후렌치 후라이(M)|',qty:1}]},
+  {text:'포장: 불고기 버거 세트 1개, 음료를 오렌지 주스로 바꾸기 (무료)',dine:'포장',pay:null,items:[{key:'불고기 버거|세트',qty:1,drink:'오렌지 주스'}]},
+  {text:'매장에서 먹기: 치즈버거 세트 1개, 음료를 아이스 아메리카노로 바꾸기 (+500원), 카드로 결제',dine:'매장',pay:'카드',items:[{key:'치즈버거|세트',qty:1,drink:'아메리카노(아이스)'}]}
+];
+const PAYS={
+  '카드':{e:'💳',sub:'신용·체크카드',guide:'카드 투입구에 카드를 끝까지 넣어주세요.',small:'칩이 있는 면을 위로 향하게 하여 화살표 방향으로 넣고, 결제가 끝날 때까지 빼지 마세요.',btn:'카드를 넣었어요 (연습)'},
+  '간편결제':{e:'📱',sub:'삼성페이·네이버페이 등',guide:'휴대폰의 결제 화면(QR/바코드)을 스캐너에 대주세요.',small:'휴대폰 밝기를 높이고, 화면을 스캐너 빨간 불빛 가까이에 대보세요.',btn:'스캔했어요 (연습)'},
+  '모바일 쿠폰':{e:'🎟️',sub:'기프티콘·할인쿠폰',guide:'쿠폰 바코드를 스캐너에 대주세요.',small:'쿠폰 화면을 밝게 하고 바코드가 잘 보이도록 대주세요.',btn:'쿠폰을 스캔했어요 (연습)'}
+};
+
+/* ===== 상태 ===== */
+const S={screen:'start',dine:null,cat:'burger',cart:[],modal:null,mission:null,help:true,pay:null,processing:false,orderNo:null,toast:'',uid:0,done:null};
+const fmt=n=>n.toLocaleString('ko-KR')+'원';
+const total=()=>S.cart.reduce((a,c)=>a+c.price*c.qty,0);
+const count=()=>S.cart.reduce((a,c)=>a+c.qty,0);
+const label=k=>k.replace('|',' · ').replace(/ · $/,'');
+let toastT;
+function toast(t){S.toast=t;render();clearTimeout(toastT);toastT=setTimeout(()=>{S.toast='';render()},1800)}
+
+/* ===== 담기 ===== */
+function addCart(item,variant,desc,price,drinkKey){
+  drinkKey=drinkKey||'';
+  const base=item.name+'|'+variant;
+  const key=base+'|'+drinkKey;
+  const ex=S.cart.find(c=>c.key===key&&c.desc===desc);
+  if(ex)ex.qty++;
+  else S.cart.push({id:++S.uid,key,base,drinkKey,name:item.name+(variant==='세트'?' 세트':''),e:item.e,desc,price,qty:1});
+  S.modal=null;
+  toast('✔ '+item.name+(variant==='세트'?' 세트':'')+' 담았어요');
+}
+
+function finishSet(drink,extra){
+  const it=S.modal.item;
+  const note=extra?' (+'+extra+'원)':(drink!=='코카콜라'?' (무료 변경)':' (기본)');
+  addCart(it,'세트','세트 · 후렌치 후라이 · '+drink+note,it.price+SET_ADD+extra,drink);
+}
+
+/* ===== 동작 ===== */
+const A={
+  dine(d){S.dine=d.v;S.screen='menu';S.cat='burger';render();scrollTop()},
+  mission(d){S.mission=d.v===''?null:+d.v;render()},
+  help(){S.help=!S.help;render()},
+  cat(d){S.cat=d.v;render();scrollTop()},
+  pick(d){
+    const it=MENU[+d.id];
+    if(it.cat==='burger')addCart(it,'단품','단품',it.price);
+    else if(it.cat==='coffee'){S.modal={type:'temp',item:it};render()}
+    else addCart(it,'','',it.price);
+  },
+  pickSet(d){S.modal={type:'setdrink',item:MENU[+d.id],step:1,coffee:null};render()},
+  sdChoose(d){
+    if(d.v==='coffee'){S.modal.step=2;render();return}
+    finishSet(d.v==='juice'?'오렌지 주스':'코카콜라',0);
+  },
+  sdCoffee(d){S.modal.coffee=d.v;S.modal.step=3;render()},
+  sdTemp(d){finishSet(S.modal.coffee+'('+d.v+')',COFFEE_ADD)},
+  sdBack(){const m=S.modal;m.step--;if(m.step<1)S.modal=null;render()},
+  temp(d){const it=S.modal.item;addCart(it,d.v,d.v,it.price)},
+  close(){S.modal=null;render()},
+  qty(d){const c=S.cart.find(x=>x.id==d.id);if(!c)return;c.qty+=+d.d;if(c.qty<1)c.qty=1;if(c.qty>9)c.qty=9;render()},
+  del(d){S.cart=S.cart.filter(x=>x.id!=d.id);render()},
+  clear(){if(confirm('담은 메뉴를 모두 지울까요?')){S.cart=[];render()}},
+  toCart(){S.screen='cart';render();scrollTop()},
+  toMenu(){S.screen='menu';render();scrollTop()},
+  toPay(){if(!S.cart.length)return;S.screen='pay';render();scrollTop()},
+  payWith(d){S.pay=d.v;S.processing=false;S.screen='paying';render();scrollTop()},
+  payBack(){S.screen='pay';render()},
+  payDone(){
+    S.processing=true;render();
+    setTimeout(()=>{
+      S.orderNo=100+Math.floor(Math.random()*900);
+      S.done={cart:JSON.parse(JSON.stringify(S.cart)),total:total(),dine:S.dine,pay:S.pay,mission:S.mission,result:checkMission()};
+      S.screen='done';S.processing=false;render();scrollTop();
+    },1800);
+  },
+  home(){
+    if(S.screen==='menu'&&S.cart.length&&!confirm('처음 화면으로 돌아가면 담은 메뉴가 지워져요. 돌아갈까요?'))return;
+    reset();render();
+  },
+  restart(){reset();render()}
+};
+function reset(){S.screen='start';S.dine=null;S.cart=[];S.modal=null;S.pay=null;S.processing=false;S.orderNo=null;S.done=null;S.cat='burger'}
+function scrollTop(){const m=document.querySelector('main');if(m)m.scrollTop=0}
+
+/* ===== 미션 채점 ===== */
+function checkMission(){
+  if(S.mission==null)return null;
+  const m=MISSIONS[S.mission],want={},got={};
+  m.items.forEach(i=>want[i.key]=(want[i.key]||0)+i.qty);
+  S.cart.forEach(c=>got[c.base]=(got[c.base]||0)+c.qty);
+  const miss=[],extra=[];
+  new Set([...Object.keys(want),...Object.keys(got)]).forEach(k=>{
+    const w=want[k]||0,g=got[k]||0;
+    if(g<w)miss.push(label(k)+' '+(w-g)+'개');
+    if(g>w)extra.push(label(k)+' '+(g-w)+'개');
+  });
+  let drinkOk=null,drinkWant=null;
+  const di=m.items.find(i=>i.drink);
+  if(di){
+    drinkWant=di.drink;
+    const n=S.cart.filter(c=>c.base===di.key&&c.drinkKey===di.drink).reduce((a,c)=>a+c.qty,0);
+    drinkOk=n>=di.qty;
+  }
+  return{dineOk:S.dine===m.dine,menuOk:!miss.length&&!extra.length,payOk:!m.pay||S.pay===m.pay,drinkOk,drinkWant,miss,extra,m};
+}
+
+/* ===== 화면 ===== */
+function hintText(){
+  const s=S.screen;
+  if(s==='start')return'먼저 아래에서 <u>매장에서 먹기</u> 또는 <u>포장하기</u> 중 하나를 눌러보세요.';
+  if(s==='menu')return S.cart.length
+    ?'더 고르셔도 되고, 다 고르셨으면 아래 <u>주문 확인</u> 버튼을 누르세요.'
+    :'위쪽 종류 버튼으로 메뉴를 찾으세요. <u>버거(단품)</u>은 버거만, <u>세트메뉴</u>는 감자와 음료가 함께 나와요.';
+  if(s==='cart')return'주문 내용과 금액이 맞는지 확인하고 <u>결제하기</u>를 누르세요. 수량은 + − 버튼으로 바꿀 수 있어요.';
+  if(s==='pay')return'결제 방법을 하나 골라주세요.';
+  if(s==='paying')return S.processing?'결제 중이에요. 잠시만 기다려주세요.':'안내 문구를 읽고 따라 해보세요. 연습이라 실제 결제는 되지 않아요.';
+  return'수고하셨어요! 번호가 불리면 주문한 음식을 받으시면 됩니다.';
+}
+function stepIdx(){return{start:0,menu:1,cart:2,pay:3,paying:3,done:4}[S.screen]}
+
+function header(){
+  const names=['주문방법','메뉴선택','주문확인','결제','완료'],i=stepIdx();
+  return `<div class="top">
+    <div class="top-row"><h1>🍔 키오스크 주문 연습</h1>
+      <button class="chip" data-act="help">${S.help?'💡 도움말 켜짐':'💡 도움말 꺼짐'}</button></div>
+    <div class="steps">${names.map((n,k)=>`<div class="${k===i?'on':k<i?'done':''}">${k+1}. ${n}</div>`).join('')}</div>
+  </div>
+  ${S.help&&S.screen!=='start'?`<div class="hint"><span class="ic">👆</span><span>${hintText()}</span></div>`:''}
+  ${S.mission!=null&&S.screen!=='start'&&S.screen!=='done'?`<div class="mission">🎯 미션: ${MISSIONS[S.mission].text}</div>`:''}`;
+}
+
+function startView(){
+  return `<div class="start-title"><div class="big">🍟🍔🥤</div><h2>주문 연습을 시작해요</h2><p>실제 맥도날드 메뉴처럼 눌러보세요</p></div>
+  <div class="choice">
+    <button class="btn ${S.help?'pulse':''}" data-act="dine" data-v="매장"><span class="e">🍽️</span>매장에서 먹기</button>
+    <button class="btn ${S.help?'pulse':''}" data-act="dine" data-v="포장"><span class="e">🛍️</span>포장하기</button>
+  </div>`;
+}
+
+function menuView(){
+  const isSet=S.cat==='set';
+  const items=MENU.filter(m=>m.cat===(isSet?'burger':S.cat));
+  return `<div class="cats">${CATS.map(c=>`<button class="cat ${c.id===S.cat?'on':''}" data-act="cat" data-v="${c.id}"><span class="e">${c.e}</span>${c.name}</button>`).join('')}</div>
+  ${isSet?`<div class="incl" style="margin-bottom:12px">🍟 후렌치 후라이(M) + 🥤 음료가 함께 나와요<br>음료는 코카콜라가 기본이고, 바꿀 수 있어요</div>`:''}
+  <div class="grid">${items.map(m=>`<button class="item" data-act="${isSet?'pickSet':'pick'}" data-id="${m.id}"><span class="e">${isSet?'🍱':m.e}</span>${m.name}${isSet?' 세트':''}<span class="p">${fmt(m.price+(isSet?SET_ADD:0))}</span></button>`).join('')}</div>`;
+}
+
+function cartView(){
+  if(!S.cart.length)return `<div class="empty"><div class="e">🛒</div>담은 메뉴가 없어요.<br>메뉴를 먼저 골라주세요.</div>`;
+  return S.cart.map(c=>`<div class="cart-item">
+    <div class="t"><span class="e">${c.e}</span>${c.name}</div>
+    ${c.desc&&c.desc!=='단품'?`<div class="d">${c.desc}</div>`:''}
+    <div class="b"><div class="qty"><button data-act="qty" data-id="${c.id}" data-d="-1" aria-label="줄이기">−</button><span>${c.qty}</span><button data-act="qty" data-id="${c.id}" data-d="1" aria-label="늘리기">+</button></div>
+      <div class="price">${fmt(c.price*c.qty)}</div></div>
+    <div style="text-align:right;margin-top:8px"><button class="del" data-act="del" data-id="${c.id}">🗑 이 메뉴 빼기</button></div>
+  </div>`).join('')+`<div class="total"><span>총 결제금액</span><b>${fmt(total())}</b></div>
+  <button class="btn sub small" data-act="clear">전체 지우기</button>`;
+}
+
+function payView(){
+  return `<div class="big-msg center">결제 방법을 골라주세요</div><div class="sm-msg center" style="margin-bottom:16px">결제 금액 <b style="color:var(--red);font-size:24px">${fmt(total())}</b></div>
+  <div class="choice" style="gap:12px">${Object.keys(PAYS).map(k=>`<button class="btn paybtn ${S.help&&k==='카드'?'pulse':''}" data-act="payWith" data-v="${k}"><span class="e">${PAYS[k].e}</span><span>${k}<small>${PAYS[k].sub}</small></span></button>`).join('')}</div>`;
+}
+
+function payingView(){
+  const p=PAYS[S.pay];
+  if(S.processing)return `<div class="center"><div class="spin"></div><div class="big-msg">결제 중입니다…</div><div class="sm-msg">카드를 빼지 말고 기다려주세요</div></div>`;
+  const visual=S.pay==='카드'?`<div class="slot"><div class="card"></div></div>`:`<div class="qr center">${p.e}</div>`;
+  return `<div class="center"><div class="sm-msg">결제 금액</div><div style="font-size:34px;font-weight:900;color:var(--red)">${fmt(total())}</div>
+  ${visual}<div class="big-msg">${p.guide}</div><div class="sm-msg">${p.small}</div></div>
+  <div style="margin-top:20px"><button class="btn green ${S.help?'pulse':''}" data-act="payDone">${p.btn}</button></div>`;
+}
+
+function doneView(){
+  const d=S.done,r=d.result;
+  let res='';
+  if(r){
+    const ok=r.dineOk&&r.menuOk&&r.payOk&&r.drinkOk!==false;
+    res=`<div class="result ${ok?'ok':'ng'}"><h3>${ok?'🎉 미션 성공!':'🔍 미션 다시 확인해요'}</h3>
+      <div>${r.dineOk?'✔':'✘'} 주문 방법: ${r.m.dine==='매장'?'매장에서 먹기':'포장하기'}</div>
+      <div>${r.menuOk?'✔':'✘'} 메뉴 담기${r.miss.length?`<br>&nbsp;&nbsp;· 빠진 메뉴: ${r.miss.join(', ')}`:''}${r.extra.length?`<br>&nbsp;&nbsp;· 더 담은 메뉴: ${r.extra.join(', ')}`:''}</div>
+      ${r.drinkOk!==null?`<div>${r.drinkOk?'✔':'✘'} 세트 음료: ${r.drinkWant}</div>`:''}
+      ${r.m.pay?`<div>${r.payOk?'✔':'✘'} 결제 방법: ${r.m.pay}</div>`:''}</div>`;
+  }
+  return `<div class="order-no"><small>주문번호</small><div class="n">${d.orderNo}</div><div class="sm-msg">${d.dine==='매장'?'매장에서 먹기':'포장'} · ${d.pay} 결제</div></div>
+  ${res}
+  <div class="receipt">${d.cart.map(c=>`<div class="r"><span>${c.name} ×${c.qty}</span><span>${fmt(c.price*c.qty)}</span></div>`).join('')}
+    <hr style="border:0;border-top:1px dashed #bbb"><div class="r"><b>합계</b><b>${fmt(d.total)}</b></div></div>
+  <div class="sm-msg center" style="margin-bottom:14px">영수증을 받고, 화면에 주문번호가 나오면 카운터에서 음식을 받으세요.</div>
+  <button class="btn" data-act="restart">🔄 처음부터 다시 연습하기</button>`;
+}
+
+function bottomBar(){
+  if(S.screen==='menu')return `<div class="bar"><button class="btn sub small" style="flex:none;width:auto" data-act="home">← 처음</button>
+    <div class="sum">🛒 ${count()}개<br><b>${fmt(total())}</b></div>
+    <button class="btn ${S.help&&count()?'pulse':''}" data-act="toCart" ${count()?'':'disabled'}>주문 확인</button></div>`;
+  if(S.screen==='cart')return `<div class="bar"><button class="btn sub small" style="flex:1" data-act="toMenu">← 메뉴 더 고르기</button>
+    <button class="btn ${S.help&&count()?'pulse':''}" style="flex:1" data-act="toPay" ${count()?'':'disabled'}>결제하기</button></div>`;
+  if(S.screen==='pay')return `<div class="bar"><button class="btn sub small" data-act="toCart">← 주문 확인으로</button></div>`;
+  if(S.screen==='paying'&&!S.processing)return `<div class="bar"><button class="btn sub small" data-act="payBack">← 결제 방법 다시 고르기</button></div>`;
+  return '';
+}
+
+function modalView(){
+  const m=S.modal;if(!m)return'';
+  let body='';
+  if(m.type==='setdrink'){
+    const base=m.item.price+SET_ADD;
+    const back=`<div class="row" style="margin-top:4px"><button class="btn sub small" data-act="sdBack">← 이전 단계</button><button class="btn sub small" data-act="close">✕ 취소</button></div>`;
+    if(m.step===1)body=`<h3>${m.item.name} 세트</h3><div class="sub">1단계 · 음료를 골라주세요</div>
+      <div class="incl">🍟 후렌치 후라이(M) 포함<br>🥤 음료는 코카콜라가 기본이에요 · 세트 ${fmt(base)}</div>
+      <button class="btn opt ${S.help?'pulse':''}" data-act="sdChoose" data-v="cola"><span>🥤 코카콜라 (기본)</span><span>그대로</span></button>
+      <button class="btn sub opt" data-act="sdChoose" data-v="juice"><span>🧃 오렌지 주스로 변경</span><span>무료</span></button>
+      <button class="btn sub opt" data-act="sdChoose" data-v="coffee"><span>☕ 커피로 변경</span><span>+${fmt(COFFEE_ADD)}</span></button>${back}`;
+    else if(m.step===2)body=`<h3>☕ 커피 종류</h3><div class="sub">2단계 · 커피를 골라주세요 (+${fmt(COFFEE_ADD)})</div>
+      ${COFFEES.map(c=>`<button class="btn sub" data-act="sdCoffee" data-v="${c}">☕ ${c}</button>`).join('')}${back}`;
+    else body=`<h3>☕ ${m.coffee}</h3><div class="sub">3단계 · 차갑게 / 따뜻하게</div>
+      <button class="btn" style="background:#2a7bd0;box-shadow:0 4px 0 #1a5a9e" data-act="sdTemp" data-v="아이스">🧊 아이스</button>
+      <button class="btn" style="background:#e07a1f;box-shadow:0 4px 0 #a85a12" data-act="sdTemp" data-v="핫">🔥 핫 (따뜻하게)</button>
+      <div class="sm-msg center" style="margin-bottom:10px">세트 ${fmt(base+COFFEE_ADD)} (커피 변경 +${fmt(COFFEE_ADD)} 포함)</div>${back}`;
+  }
+  if(m.type==='temp')body=`<h3>${m.item.e} ${m.item.name}</h3><div class="sub">차갑게 / 따뜻하게 골라주세요</div>
+    <button class="btn" style="background:#2a7bd0;box-shadow:0 4px 0 #1a5a9e" data-act="temp" data-v="아이스">🧊 아이스</button>
+    <div style="height:10px"></div>
+    <button class="btn" style="background:#e07a1f;box-shadow:0 4px 0 #a85a12" data-act="temp" data-v="핫">🔥 핫 (따뜻하게)</button>`;
+  return `<div class="ov"><div class="sheet">${body}<button class="btn sub small" data-act="close">✕ 취소</button></div></div>`;
+}
+
+function render(){
+  const body={start:startView,menu:menuView,cart:cartView,pay:payView,paying:payingView,done:doneView}[S.screen]();
+  document.getElementById('app').innerHTML=header()+`<main>${body}</main>`+bottomBar()+modalView()+(S.toast?`<div class="toast">${S.toast}</div>`:'');
+}
+
+/* 스크롤 위치 유지: 메뉴 화면 재렌더 시 main 스크롤 복원 */
+const _render=render;
+render=function(){
+  const m=document.querySelector('main'),y=m?m.scrollTop:0,sc=S.screen;
+  _render();
+  const n=document.querySelector('main');if(n&&m&&sc===window.__lastScreen)n.scrollTop=y;
+  window.__lastScreen=sc;
+};
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-act]');
+  if(!t||t.disabled)return;
+  const f=A[t.dataset.act];if(f)f(t.dataset);
+});
+render();
+</script>
+</body>
+</html>
