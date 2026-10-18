@@ -132,6 +132,7 @@ main{flex:1;overflow-y:auto;padding:14px;-webkit-overflow-scrolling:touch}
 .mrow .q{color:var(--red)}
 .mrow .del{flex:none;padding:10px 12px;font-size:15px}
 .foot{font-size:13px;color:var(--gray);text-align:center;margin:18px 0 4px;line-height:1.5}
+.incl.one{white-space:nowrap;font-size:clamp(10px,4vw,18px);padding:10px 6px;margin-bottom:12px}
 /* ===== 좁은 화면(폰) 보정 ===== */
 body{word-break:keep-all;overflow-wrap:break-word}
 .top{padding:8px 12px 8px}
@@ -258,7 +259,7 @@ const A={
   close(){S.modal=null;render()},
   qty(d){const c=S.cart.find(x=>x.id==d.id);if(!c)return;c.qty+=+d.d;if(c.qty<1)c.qty=1;if(c.qty>9)c.qty=9;render()},
   del(d){S.cart=S.cart.filter(x=>x.id!=d.id);toast('🗑 삭제했어요')},
-  clear(){if(confirm('담은 메뉴를 모두 지울까요?')){S.cart=[];render()}},
+  clear(){S.modal={type:'confirm',title:'모두 지울까요?',msg:'담은 메뉴를 모두 지워요.',yes:'clearYes',yesLabel:'네, 모두 지울래요'};render()},
   toCart(){S.screen='cart';render();scrollTop()},
   toMenu(){S.screen='menu';render();scrollTop()},
   toPay(){if(!S.cart.length)return;S.screen='pay';render();scrollTop()},
@@ -273,9 +274,14 @@ const A={
     },1800);
   },
   home(){
-    if(S.screen==='menu'&&S.cart.length&&!confirm('처음 화면으로 돌아가면 담은 메뉴가 지워져요. 돌아갈까요?'))return;
+    if(S.screen==='menu'&&S.cart.length){
+      S.modal={type:'confirm',title:'처음 화면으로 갈까요?',msg:'담은 메뉴가 모두 지워져요.',yes:'homeYes',yesLabel:'네, 처음으로 갈래요'};
+      render();return;
+    }
     reset();render();
   },
+  homeYes(){reset();render()},
+  clearYes(){S.cart=[];S.modal=null;render()},
   restart(){reset();render()}
 };
 function reset(){S.screen='start';S.dine=null;S.cart=[];S.modal=null;S.pay=null;S.processing=false;S.orderNo=null;S.done=null;S.cat='burger'}
@@ -314,7 +320,7 @@ function menuView(){
   const isSet=S.cat==='set';
   const items=MENU.filter(m=>m.cat===(isSet?'burger':S.cat));
   return `<div class="cats">${CATS.map(c=>`<button class="cat ${c.id===S.cat?'on':''}" data-act="cat" data-v="${c.id}"><span class="e">${c.e}</span>${c.name}</button>`).join('')}</div>
-  ${isSet?`<div class="incl" style="margin-bottom:12px">🍟 후렌치 후라이(M) + 🥤 음료가 함께 나와요<br>음료는 코카콜라가 기본이고, 바꿀 수 있어요</div>`:''}
+  ${isSet?`<div class="incl one">🍟 후렌치 후라이(M) + 🥤 음료가 함께 나와요</div>`:''}
   <div class="grid">${items.map(m=>`<button class="item" data-act="${isSet?'pickSet':'pick'}" data-id="${m.id}"><span class="e">${isSet?'🍱':m.e}</span>${m.name}${isSet?' 세트':''}<span class="p">${fmt(m.price+(isSet?SET_ADD:0))}</span></button>`).join('')}</div>`;
 }
 
@@ -390,6 +396,8 @@ function modalView(){
       <button class="btn" style="background:#e07a1f;box-shadow:0 4px 0 #a85a12" data-act="sdTemp" data-v="핫">🔥 핫 (따뜻하게)</button>
       <div class="sm-msg center" style="margin-bottom:10px">세트 ${fmt(base+COFFEE_ADD)} (커피 변경 +${fmt(COFFEE_ADD)} 포함)</div>${back}`;
   }
+  if(m.type==='confirm')body=`<h3>${m.title}</h3><div class="sub">${m.msg}</div>
+    <button class="btn" data-act="${m.yes}">${m.yesLabel}</button>`;
   if(m.type==='temp')body=`<h3>${m.item.e} ${m.item.name}</h3><div class="sub">차갑게 / 따뜻하게 골라주세요</div>
     <button class="btn" style="background:#2a7bd0;box-shadow:0 4px 0 #1a5a9e" data-act="temp" data-v="아이스">🧊 아이스</button>
     <div style="height:10px"></div>
